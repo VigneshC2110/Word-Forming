@@ -6,8 +6,12 @@ let timeLeft = 60;
 
 function startGame() {
   givenLetters = getRandomEnglishLetters(7);
+  usedWords = [];
+  score = 0;
+  timeLeft = 60;
   document.getElementById("letters").innerText = givenLetters.join(" ");
   document.getElementById("score").innerText = "Score: 0";
+  document.getElementById("used-words").innerHTML = "";
   startTimer();
 }
 
@@ -24,8 +28,14 @@ function getRandomEnglishLetters(count) {
 function submitWord() {
   const input = document.getElementById("word-input");
   const word = input.value.trim().toLowerCase();
+  input.value = "";
 
-  if (!word) return; // Empty word check
+  if (!word) return;
+
+  if (word.length < 2) {
+    alert("Word must be at least 2 letters.");
+    return;
+  }
 
   if (!isUsingOnlyGivenLetters(word)) {
     alert("Use only the displayed letters!");
@@ -39,26 +49,20 @@ function submitWord() {
 
   fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
     .then(res => {
-      if (!res.ok) {
-        alert("This word is not valid!");
-        throw new Error("Word not found in dictionary");
-      }
+      if (!res.ok) throw new Error("Invalid word");
       return res.json();
     })
-    .then(data => {
+    .then(() => {
       usedWords.push(word);
       document.getElementById("used-words").innerHTML += `<li>${word}</li>`;
       score += word.length * 2;
       document.getElementById("score").innerText = `Score: ${score}`;
-
       givenLetters = getRandomEnglishLetters(7);
       document.getElementById("letters").innerText = givenLetters.join(" ");
     })
     .catch(() => {
-      alert("This word is not valid!");
+      alert("This word is not valid English.");
     });
-
-  input.value = "";
 }
 
 function isUsingOnlyGivenLetters(word) {
@@ -66,7 +70,7 @@ function isUsingOnlyGivenLetters(word) {
   for (let char of word) {
     const index = tempLetters.indexOf(char);
     if (index === -1) return false;
-    tempLetters.splice(index, 1); 
+    tempLetters.splice(index, 1);
   }
   return true;
 }
